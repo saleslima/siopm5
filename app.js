@@ -279,7 +279,7 @@ function createRuaSuggestionsBox() {
     if (ruaSuggestionsBox) return;
     ruaSuggestionsBox = document.createElement('div');
     ruaSuggestionsBox.id = 'ruaSuggestionsBox';
-    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% - 40px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
+    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% +600px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
     const parent = ruaInput.parentNode;
     parent.style.position = 'relative';
     parent.appendChild(ruaSuggestionsBox);
