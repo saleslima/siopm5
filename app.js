@@ -279,7 +279,7 @@ function createRuaSuggestionsBox() {
     if (ruaSuggestionsBox) return;
     ruaSuggestionsBox = document.createElement('div');
     ruaSuggestionsBox.id = 'ruaSuggestionsBox';
-    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% - 500px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
+    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% - 40px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
     const parent = ruaInput.parentNode;
     parent.style.position = 'relative';
     parent.appendChild(ruaSuggestionsBox);
@@ -288,31 +288,27 @@ function createRuaSuggestionsBox() {
 
 async function fetchStreetCandidates(rua, municipio, estado) {
     try {
-        // Force search to São Paulo state only to limit suggestions as requested
-        const estadoForSearch = 'São Paulo';
         const qParts = [rua];
         if (municipio) qParts.push(municipio);
-        // Always include São Paulo as state in the query
-        qParts.push(estadoForSearch);
+        // Always force São Paulo state
+        qParts.push('São Paulo');
         qParts.push('Brasil');
         const params = new URLSearchParams({
             q: qParts.join(', '),
             format: 'jsonv2',
             addressdetails: 1,
-            limit: 10
+            limit: 20
         });
         const res = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
             headers: { 'Accept-Language': 'pt-BR' }
         });
         if (!res.ok) return [];
         const results = await res.json();
-        // filter to items that look like streets/ways and that are strictly in São Paulo state
+        // filter to items that look like streets/ways AND are in São Paulo state
         return results.filter(r => {
-            const isStreetLike = r.type && (r.type.includes('way') || r.type.includes('street') || (r.address && (r.address.road || r.address.pedestrian)));
-            // Only accept results that explicitly have São Paulo as the state
-            const stateName = r.address && r.address.state ? String(r.address.state).toUpperCase() : '';
-            const stateMatch = stateName.includes('SÃO PAULO') || stateName.includes('SAO PAULO') || stateName === 'SP';
-            return isStreetLike && stateMatch;
+            const isStreet = r.type && (r.type.includes('way') || r.type.includes('street') || (r.address && (r.address.road || r.address.pedestrian)));
+            const isSaoPaulo = r.address && (r.address.state === 'São Paulo' || r.address.state === 'SP');
+            return isStreet && isSaoPaulo;
         });
     } catch (err) {
         console.warn('Street candidates error', err);
