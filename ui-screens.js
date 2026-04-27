@@ -6,6 +6,12 @@ export async function showUserDashboard(userData, allScreens) {
     const userInfo = document.getElementById('userInfo');
     
     setCurrentUser(userData);
+
+    // Setup pause system for attendants
+    if (userData.funcao === 'ATENDENTE' || userData.funcao === 'ATENDENTE COBOM') {
+        const { setupPauseSystem } = await import('./attendance.js');
+        setTimeout(() => setupPauseSystem(), 500);
+    }
     
     let infoHTML = '';
     
@@ -94,6 +100,19 @@ export async function showSupervisorCobomScreen(userData, allScreens) {
     
     window.selectedBTL = null;
     
+    const updateButtonStyles = (selectedBtn) => {
+        document.querySelectorAll('.btn-btl-selector').forEach(b => {
+            b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+            b.style.transform = 'translateY(0)';
+            b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        });
+        if (selectedBtn) {
+            selectedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
+            selectedBtn.style.transform = 'translateY(-2px)';
+            selectedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+        }
+    };
+    
     document.querySelectorAll('.btn-btl-selector').forEach(btn => {
         btn.addEventListener('click', async () => {
             const btl = btn.getAttribute('data-btl');
@@ -104,33 +123,26 @@ export async function showSupervisorCobomScreen(userData, allScreens) {
             document.getElementById('selectedBtlName').textContent = btl;
             document.getElementById('selectedBtlDisplay').style.display = 'block';
             
-            document.querySelectorAll('.btn-btl-selector').forEach(b => {
-                b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                b.style.transform = 'translateY(0)';
-                b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            });
-            btn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-            btn.style.transform = 'translateY(-2px)';
-            btn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+            updateButtonStyles(btn);
             
             await loadDispatcherOcorrencias(btl, document.getElementById('dispatcherContent'));
         });
         
-        btn.addEventListener('mouseenter', () => {
-            const currentBg = btn.style.background;
+        btn.addEventListener('mouseenter', function() {
+            const currentBg = this.style.background;
             if (!currentBg.includes('1976d2')) {
-                btn.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                this.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
             }
         });
         
-        btn.addEventListener('mouseleave', () => {
-            const currentBg = btn.style.background;
+        btn.addEventListener('mouseleave', function() {
+            const currentBg = this.style.background;
             if (!currentBg.includes('1976d2')) {
-                btn.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                this.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
             }
         });
     });
@@ -144,13 +156,9 @@ export async function showSupervisorCobomScreen(userData, allScreens) {
         document.getElementById('selectedBtlName').textContent = savedGB;
         document.getElementById('selectedBtlDisplay').style.display = 'block';
         
-        // Highlight the saved button
+        // Highlight the saved button using the same updateButtonStyles function
         const savedBtn = document.querySelector(`[data-btl="${savedGB}"]`);
-        if (savedBtn) {
-            savedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-            savedBtn.style.transform = 'translateY(-2px)';
-            savedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
-        }
+        updateButtonStyles(savedBtn);
         
         await loadDispatcherOcorrencias(savedGB, document.getElementById('dispatcherContent'));
     } else {
@@ -202,6 +210,19 @@ export async function showSupervisorScreen(userData, allScreens) {
         
         window.selectedBTL = null;
         
+        const updateButtonStylesEsp = (selectedBtn) => {
+            document.querySelectorAll('.btn-btl-selector').forEach(b => {
+                b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+                b.style.transform = 'translateY(0)';
+                b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+            });
+            if (selectedBtn) {
+                selectedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
+                selectedBtn.style.transform = 'translateY(-2px)';
+                selectedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+            }
+        };
+
         document.querySelectorAll('.btn-btl-selector').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const btl = btn.getAttribute('data-btl');
@@ -212,14 +233,7 @@ export async function showSupervisorScreen(userData, allScreens) {
                 document.getElementById('selectedBtlName').textContent = btl;
                 document.getElementById('selectedBtlDisplay').style.display = 'block';
                 
-                document.querySelectorAll('.btn-btl-selector').forEach(b => {
-                    b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                    b.style.transform = 'translateY(0)';
-                    b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                });
-                btn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+                updateButtonStylesEsp(btn);
                 
                 // Clear Dispatcher search state when switching GB
                 const searchFormContainer = document.getElementById('dispatcherSearchFormContainer');
@@ -233,21 +247,21 @@ export async function showSupervisorScreen(userData, allScreens) {
                 await loadDispatcherOcorrencias(btl, document.getElementById('dispatcherContent'));
             });
             
-            btn.addEventListener('mouseenter', () => {
-                const currentBg = btn.style.background;
+            btn.addEventListener('mouseenter', function() {
+                const currentBg = this.style.background;
                 if (!currentBg.includes('1976d2')) {
-                    btn.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
-                    btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                    this.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
                 }
             });
             
-            btn.addEventListener('mouseleave', () => {
-                const currentBg = btn.style.background;
+            btn.addEventListener('mouseleave', function() {
+                const currentBg = this.style.background;
                 if (!currentBg.includes('1976d2')) {
-                    btn.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                    btn.style.transform = 'translateY(0)';
-                    btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    this.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
                 }
             });
         });
@@ -261,13 +275,9 @@ export async function showSupervisorScreen(userData, allScreens) {
             document.getElementById('selectedBtlName').textContent = savedUnit;
             document.getElementById('selectedBtlDisplay').style.display = 'block';
             
-            // Highlight the saved button
+            // Highlight the saved button using the same updateButtonStylesEsp function
             const savedBtn = document.querySelector(`[data-btl="${savedUnit}"]`);
-            if (savedBtn) {
-                savedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-                savedBtn.style.transform = 'translateY(-2px)';
-                savedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
-            }
+            updateButtonStylesEsp(savedBtn);
             
             await loadDispatcherOcorrencias(savedUnit, document.getElementById('dispatcherContent'));
         } else {
@@ -321,6 +331,19 @@ export async function showSupervisorScreen(userData, allScreens) {
     
     window.selectedBTL = null;
     
+    const updateButtonStylesCPA = (selectedBtn) => {
+        document.querySelectorAll('.btn-btl-selector').forEach(b => {
+            b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+            b.style.transform = 'translateY(0)';
+            b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        });
+        if (selectedBtn) {
+            selectedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
+            selectedBtn.style.transform = 'translateY(-2px)';
+            selectedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+        }
+    };
+    
     document.querySelectorAll('.btn-btl-selector').forEach(btn => {
         btn.addEventListener('click', async () => {
             const btl = btn.getAttribute('data-btl');
@@ -331,33 +354,26 @@ export async function showSupervisorScreen(userData, allScreens) {
             document.getElementById('selectedBtlName').textContent = btl;
             document.getElementById('selectedBtlDisplay').style.display = 'block';
             
-            document.querySelectorAll('.btn-btl-selector').forEach(b => {
-                b.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                b.style.transform = 'translateY(0)';
-                b.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-            });
-            btn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-            btn.style.transform = 'translateY(-2px)';
-            btn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
+            updateButtonStylesCPA(btn);
             
             await loadDispatcherOcorrencias(btl, document.getElementById('dispatcherContent'));
         });
         
-        btn.addEventListener('mouseenter', () => {
-            const currentBg = btn.style.background;
+        btn.addEventListener('mouseenter', function() {
+            const currentBg = this.style.background;
             if (!currentBg.includes('1976d2')) {
-                btn.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                this.style.background = 'linear-gradient(135deg, #34495e 0%, #2c3e50 100%)';
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
             }
         });
         
-        btn.addEventListener('mouseleave', () => {
-            const currentBg = btn.style.background;
+        btn.addEventListener('mouseleave', function() {
+            const currentBg = this.style.background;
             if (!currentBg.includes('1976d2')) {
-                btn.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                this.style.background = 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)';
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
             }
         });
     });
@@ -371,13 +387,9 @@ export async function showSupervisorScreen(userData, allScreens) {
         document.getElementById('selectedBtlName').textContent = savedBTL;
         document.getElementById('selectedBtlDisplay').style.display = 'block';
         
-        // Highlight the saved button
+        // Highlight the saved button using the same updateButtonStylesCPA function
         const savedBtn = document.querySelector(`[data-btl="${savedBTL}"]`);
-        if (savedBtn) {
-            savedBtn.style.background = 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)';
-            savedBtn.style.transform = 'translateY(-2px)';
-            savedBtn.style.boxShadow = '0 4px 12px rgba(25, 118, 210, 0.4)';
-        }
+        updateButtonStylesCPA(savedBtn);
         
         await loadDispatcherOcorrencias(savedBTL, document.getElementById('dispatcherContent'));
     } else {

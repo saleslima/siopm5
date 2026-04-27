@@ -74,30 +74,56 @@ export async function loadDispatcherOcorrencias(btlNumber, dispatcherContent) {
             let html = '<div style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center;">';
             // Mark the shortcut letter (O) in bold for "Observar Todas"
             html += '<button id="btnObservarTodas" class="btn-secondary" data-shortcut="O" style="padding: 8px 16px; font-size: 14px;">👁️ <strong>O</strong>bservar Todas</button>';
-            html += '<button id="btnOcultarOcorrencias" class="btn-secondary" style="padding: 8px 16px; font-size: 14px;">🙈 Ocultar Ocorrências</button>';
+            
             html += '</div>';
             html += '<div class="ocorrencias-list-dispatcher">';
             
-            // Filter based on hidden natures
-            const hiddenNatures = JSON.parse(localStorage.getItem('hiddenNatures') || '[]');
-            const filteredBtlOcorrencias = btlOcorrencias.filter(([key, ocorrencia]) => {
+            // Filter and count hidden occurrences
+            const currentUser = getCurrentUser();
+            const isSupervisor = currentUser && (currentUser.funcao === 'SUPERVISOR' || currentUser.funcao === 'SUPERVISOR COBOM');
+            
+            const hiddenNatures = isSupervisor ? [] : JSON.parse(localStorage.getItem('hiddenNatures') || '[]');
+            const hiddenOcorrencias = btlOcorrencias.filter(([key, ocorrencia]) => {
                 const naturezaCodigo = ocorrencia.natureza.split(' - ')[0];
-                return !hiddenNatures.includes(naturezaCodigo);
+                return hiddenNatures.includes(naturezaCodigo);
             });
+            
+            const hiddenC01Count = hiddenOcorrencias.filter(([k, o]) => o.natureza.split(' - ')[0] === 'C01').length;
+            const hiddenC99Count = hiddenOcorrencias.filter(([k, o]) => o.natureza.split(' - ')[0] === 'C99').length;
+            const hasHiddenOccurrences = hiddenOcorrencias.length > 0;
 
-            // Check if there are hidden occurrences and set up 60-minute reminder
-            const hasHiddenOccurrences = btlOcorrencias.length > filteredBtlOcorrencias.length;
+            // Show button with count or config option
+            let hiddenCountText = '';
+            if (hiddenC01Count > 0 && hiddenC99Count > 0) {
+                hiddenCountText = ` (C01: ${hiddenC01Count}, C99: ${hiddenC99Count})`;
+            } else if (hiddenC01Count > 0) {
+                hiddenCountText = ` (C01: ${hiddenC01Count})`;
+            } else if (hiddenC99Count > 0) {
+                hiddenCountText = ` (C99: ${hiddenC99Count})`;
+            }
+
+            if (hasHiddenOccurrences) {
+                html += `<button id="btnOcultarOcorrencias" class="btn-secondary" style="padding: 8px 16px; font-size: 14px;">👁️ Exibir Ocorrências${hiddenCountText}</button>`;
+            } else {
+                html += '<button id="btnOcultarOcorrencias" class="btn-secondary" style="padding: 8px 16px; font-size: 14px;">🙈 Ocultar Ocorrências</button>';
+            }
+
             if (hasHiddenOccurrences) {
                 const lastAlertTime = parseInt(localStorage.getItem('lastHiddenOccurrencesAlert') || '0');
                 const currentTime = Date.now();
                 
-                if (currentTime - lastAlertTime > 60 * 60 * 1000) { // 60 minutes
+                if (currentTime - lastAlertTime > 60 * 60 * 1000) {
                     setTimeout(() => {
                         alert('vc tem ocorrência ocultas');
                         localStorage.setItem('lastHiddenOccurrencesAlert', Date.now().toString());
                     }, 500);
                 }
             }
+
+            const filteredBtlOcorrencias = btlOcorrencias.filter(([key, ocorrencia]) => {
+                const naturezaCodigo = ocorrencia.natureza.split(' - ')[0];
+                return !hiddenNatures.includes(naturezaCodigo);
+            });
 
             filteredBtlOcorrencias.forEach(([key, ocorrencia]) => {
                 const tempoMs = now - ocorrencia.timestamp;
@@ -184,9 +210,20 @@ export async function loadDispatcherOcorrencias(btlNumber, dispatcherContent) {
             // Setup "Ocultar Ocorrências" button
             const btnOcultarOcorrencias = document.getElementById('btnOcultarOcorrencias');
             if (btnOcultarOcorrencias) {
-                btnOcultarOcorrencias.addEventListener('click', () => {
-                    showOcultarOcorrenciasDialog(btlNumber);
-                });
+                // Hide button for supervisors
+                if (isSupervisor) {
+                    btnOcultarOcorrencias.style.display = 'none';
+                } else {
+                    btnOcultarOcorrencias.addEventListener('click', () => {
+                        if (hasHiddenOccurrences) {
+                            // Show hidden occurrences list
+                            showHiddenOcorrenciasList(hiddenOcorrencias, btlNumber);
+                        } else {
+                            // Show dialog to select what to hide
+                            showOcultarOcorrenciasDialog(btlNumber);
+                        }
+                    });
+                }
             }
 
             document.querySelectorAll('.ocorrencia-item-dispatcher').forEach(item => {
@@ -304,7 +341,7 @@ function showOcultarOcorrenciasDialog(btlNumber) {
     modalContent.innerHTML = html;
     modal.style.display = 'block';
 
-    document.getElementById('btnSalvarOcultar').addEventListener('click', async () => {
+    const handleCheckboxChange = async () => {
         const selectedNatures = [];
         
         if (document.getElementById('hideC01').checked) {
@@ -323,9 +360,61 @@ function showOcultarOcorrenciasDialog(btlNumber) {
 
         modal.style.display = 'none';
         await loadDispatcherOcorrencias(btlNumber, document.getElementById('dispatcherContent'));
+    };
+
+    document.getElementById('hideC01').addEventListener('change', handleCheckboxChange);
+    document.getElementById('hideC99').addEventListener('change', handleCheckboxChange);
+
+    document.getElementById('btnSalvarOcultar').addEventListener('click', handleCheckboxChange);
+
+    document.getElementById('btnCancelarOcultar').addEventListener('click', async () => {
+        modal.style.display = 'none';
+        await loadDispatcherOcorrencias(btlNumber, document.getElementById('dispatcherContent'));
+    });
+}
+
+function showHiddenOcorrenciasList(hiddenOcorrencias, btlNumber) {
+    const modal = document.getElementById('ocorrenciaModal');
+    const modalContent = document.getElementById('ocorrenciaModalContent');
+
+    let html = `
+        <h2>Ocorrências Ocultas (${hiddenOcorrencias.length})</h2>
+        <div style="margin: 20px 0;">
+            <div style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+    `;
+
+    hiddenOcorrencias.forEach(([key, ocorrencia]) => {
+        const naturezaCodigo = ocorrencia.natureza.split(' - ')[0];
+        html += `
+            <div style="background: #f9f9f9; padding: 12px; border-left: 4px solid #999; border-radius: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 600; font-size: 16px;">#${ocorrencia.numeroRegistro}</span>
+                    <span style="font-weight: 600; color: #666;">${naturezaCodigo}</span>
+                </div>
+                <p style="margin: 3px 0; font-size: 13px;"><strong>Endereço:</strong> ${ocorrencia.rua}, ${ocorrencia.numero} - ${ocorrencia.bairro}</p>
+                <p style="margin: 3px 0; font-size: 13px;"><strong>Data/Hora:</strong> ${ocorrencia.dataHora}</p>
+                <p style="margin: 3px 0; font-size: 13px;"><strong>Natureza:</strong> ${ocorrencia.natureza}</p>
+            </div>
+        `;
     });
 
-    document.getElementById('btnCancelarOcultar').addEventListener('click', () => {
+    html += `
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btnConfigHidden" class="btn-secondary" style="flex: 1;">Configurar Ocultas</button>
+                <button id="btnCloseHidden" class="btn-cadastro" style="flex: 1;">Fechar</button>
+            </div>
+        </div>
+    `;
+
+    modalContent.innerHTML = html;
+    modal.style.display = 'block';
+
+    document.getElementById('btnConfigHidden').addEventListener('click', () => {
+        showOcultarOcorrenciasDialog(btlNumber);
+    });
+
+    document.getElementById('btnCloseHidden').addEventListener('click', () => {
         modal.style.display = 'none';
     });
 }

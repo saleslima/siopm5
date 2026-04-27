@@ -59,6 +59,20 @@ export function setupAdminHandlers(allScreens) {
             await loadNaturezas();
             await loadStatusFinais();
             
+            // Load pause time limits and thresholds
+            const pauseLimits = await getData('pauseTimeLimits');
+            if (pauseLimits) {
+                document.getElementById('tempoBanheiro').value = pauseLimits.banheiro || 10;
+                document.getElementById('tempoAlimentacao').value = pauseLimits.alimentacao || 30;
+                document.getElementById('tempoJanta').value = pauseLimits.janta || 60;
+            }
+            
+            const pauseThresholds = await getData('pauseThresholds');
+            if (pauseThresholds) {
+                document.getElementById('yellowThreshold').value = pauseThresholds.yellowPercent || 20;
+                document.getElementById('redThreshold').value = pauseThresholds.redPercent || 50;
+            }
+            
             // Generate initial chart
             await generateChart();
         } else {
@@ -214,6 +228,42 @@ export function setupAdminHandlers(allScreens) {
     if (btnGerarGrafico) {
         btnGerarGrafico.addEventListener('click', async () => {
             await generateChart();
+        });
+    }
+
+    const btnSalvarTemposPausa = document.getElementById('btnSalvarTemposPausa');
+    if (btnSalvarTemposPausa) {
+        btnSalvarTemposPausa.addEventListener('click', async () => {
+            const tempoBanheiro = parseInt(document.getElementById('tempoBanheiro').value);
+            const tempoAlimentacao = parseInt(document.getElementById('tempoAlimentacao').value);
+            const tempoJanta = parseInt(document.getElementById('tempoJanta').value);
+            const yellowThreshold = parseInt(document.getElementById('yellowThreshold').value);
+            const redThreshold = parseInt(document.getElementById('redThreshold').value);
+
+            if (tempoBanheiro < 1 || tempoAlimentacao < 1 || tempoJanta < 1) {
+                showMessage(adminMessage, 'Tempos devem ser maiores que zero.', 'error');
+                return;
+            }
+
+            if (yellowThreshold < 0 || redThreshold < 0) {
+                showMessage(adminMessage, 'Porcentagens devem ser maiores ou iguais a zero.', 'error');
+                return;
+            }
+
+            try {
+                await setData('pauseTimeLimits', {
+                    banheiro: tempoBanheiro,
+                    alimentacao: tempoAlimentacao,
+                    janta: tempoJanta
+                });
+                await setData('pauseThresholds', {
+                    yellowPercent: yellowThreshold,
+                    redPercent: redThreshold
+                });
+                showMessage(adminMessage, 'Configurações de pausa salvos com sucesso!', 'success');
+            } catch (error) {
+                showMessage(adminMessage, 'Erro ao salvar configurações.', 'error');
+            }
         });
     }
 }

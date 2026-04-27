@@ -16,9 +16,139 @@
             <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
             <h1>COPOM OFF</h1>
             <div class="button-group-main">
+                <button id="btnSupervCivil" class="btn-main-large">👨‍💼 SUPERV CIVIL</button>
+                <button id="btnChefia" class="btn-main-large">👔 Chefia</button>
                 <button id="btnAdmin" class="btn-main-large">🛡️ Admin</button>
                 <button id="btnCadastro" class="btn-main-large">📋 Cadastro</button>
                 <button id="btnUsuario" class="btn-main-large">👤 Usuário</button>
+            </div>
+        </div>
+
+        <!-- Password Screen for SUPERV CIVIL -->
+        <div id="supervCivilPasswordScreen" style="display: none;">
+            <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
+            <h1>Acesso SUPERV CIVIL</h1>
+            <form id="supervCivilPasswordForm">
+                <div class="form-group">
+                    <label for="supervCivilPassword">Senha</label>
+                    <input type="password" id="supervCivilPassword" placeholder="Senha" required>
+                </div>
+                <button type="submit" class="btn-cadastro">Entrar</button>
+                <button type="button" id="btnBackFromSupervCivilPassword" class="btn-secondary">Voltar</button>
+            </form>
+            <div id="supervCivilPasswordMessage" class="message"></div>
+        </div>
+
+        <!-- SUPERV CIVIL Dashboard -->
+        <div id="supervCivilScreen" style="display: none;">
+            <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
+            <h1>SUPERV CIVIL - Monitoramento de Pausas</h1>
+            <div style="background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; max-width: 1400px; margin: 0 auto;">
+                
+                <div style="margin-bottom: 30px;">
+                    <h3>Status em Tempo Real</h3>
+                    <div style="margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn-filter-status" data-filter="TODOS" style="padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Todos</button>
+                        <button class="btn-filter-status" data-filter="OPERANDO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Operando</button>
+                        <button class="btn-filter-status" data-filter="BANHEIRO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Banheiro</button>
+                        <button class="btn-filter-status" data-filter="ALIMENTACAO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Alimentação</button>
+                        <button class="btn-filter-status" data-filter="JANTA/ALMOÇO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Janta/Almoço</button>
+                    </div>
+                    <div id="realtimeStatusContainer" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; min-height: 200px;">
+                        <p style="text-align: center; color: #999;">Carregando...</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3>Relatório Histórico - Filtrar Período</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Data/Hora Início</label>
+                            <input type="datetime-local" id="supervCivilDataInicio" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Data/Hora Fim</label>
+                            <input type="datetime-local" id="supervCivilDataFim" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                        </div>
+                    </div>
+                    <button id="btnFiltrarRelatorio" class="btn-cadastro" style="width: 100%;">Filtrar</button>
+                </div>
+
+                <div id="supervCivilContent" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; min-height: 400px;">
+                    <p style="text-align: center; color: #999;">Carregando dados...</p>
+                </div>
+
+                <button id="btnBackFromSupervCivil" class="btn-secondary" style="width: 100%; margin-top: 20px;">Voltar</button>
+            </div>
+        </div>
+
+        <!-- Password Screen for Chefia -->
+        <div id="chefiaPasswordScreen" style="display: none;">
+            <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
+            <h1>Acesso Chefia</h1>
+            <form id="chefiaPasswordForm">
+                <div class="form-group">
+                    <label for="chefiaPassword">Senha</label>
+                    <input type="password" id="chefiaPassword" placeholder="Senha Chefia" required>
+                </div>
+                <button type="submit" class="btn-cadastro">Entrar</button>
+                <button type="button" id="btnBackFromChefiaPassword" class="btn-secondary">Voltar</button>
+            </form>
+            <div id="chefiaPasswordMessage" class="message"></div>
+        </div>
+
+        <!-- Chefia Dashboard -->
+        <div id="chefiaScreen" style="display: none;">
+            <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
+            <h1>Chefia - Dashboard</h1>
+            <div style="background: #fafafa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; max-width: 1400px; margin: 0 auto;">
+                
+                <!-- Summary Cards -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+                    <div style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%); padding: 20px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Total Pendentes</h3>
+                        <p id="totalPendentes" style="margin: 0; font-size: 32px; font-weight: 700;">0</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%); padding: 20px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Em Atendimento</h3>
+                        <p id="totalEmAtendimento" style="margin: 0; font-size: 32px; font-weight: 700;">0</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #f57c00 0%, #e64a19 100%); padding: 20px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Urgentes</h3>
+                        <p id="totalUrgentes" style="margin: 0; font-size: 32px; font-weight: 700;">0</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%); padding: 20px; border-radius: 8px; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0; font-size: 14px; opacity: 0.9;">Total Hoje</h3>
+                        <p id="totalHoje" style="margin: 0; font-size: 32px; font-weight: 700;">0</p>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h3 style="margin-top: 0;">Ocorrências por CPA</h3>
+                        <canvas id="chartCPA"></canvas>
+                    </div>
+                    <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h3 style="margin-top: 0;">Status das Ocorrências</h3>
+                        <canvas id="chartStatus"></canvas>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">Top 10 Naturezas</h3>
+                    <canvas id="chartNaturezas"></canvas>
+                </div>
+
+                <div id="btlDetailContainer" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Detalhes por BTL - <span id="selectedCPAName"></span></h3>
+                        <button id="btnCloseBTLDetail" class="btn-secondary" style="padding: 8px 16px;">Fechar</button>
+                    </div>
+                    <canvas id="chartBTLDetail"></canvas>
+                </div>
+
+                <button id="btnBackFromChefia" class="btn-secondary" style="width: 100%; margin-top: 20px;">Voltar</button>
             </div>
         </div>
 
@@ -123,6 +253,35 @@
                         <button id="btnAdicionarNatureza" class="btn-cadastro" style="padding: 10px 20px;">Adicionar</button>
                     </div>
                     <div id="listaNaturezas" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: white;"></div>
+                </div>
+
+                <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
+                    <h3>Configuração de Pausas</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Tempo Banheiro (minutos)</label>
+                            <input type="number" id="tempoBanheiro" min="1" value="10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Tempo Alimentação (minutos)</label>
+                            <input type="number" id="tempoAlimentacao" min="1" value="30" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Tempo Janta/Almoço (minutos)</label>
+                            <input type="number" id="tempoJanta" min="1" value="60" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Alerta Amarelo (% acima do limite)</label>
+                            <input type="number" id="yellowThreshold" min="0" max="100" value="20" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Alerta Vermelho (% acima do limite)</label>
+                            <input type="number" id="redThreshold" min="0" max="200" value="50" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <button id="btnSalvarTemposPausa" class="btn-cadastro" style="width: 100%;">Salvar Configurações</button>
                 </div>
 
                 <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px;">
@@ -286,6 +445,10 @@
                                 <input type="checkbox" name="funcaoCivil" value="SUPERVISOR COBOM" style="cursor: pointer;">
                                 <span>SUPERVISOR COBOM</span>
                             </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="funcaoCivil" value="SUPERV CIVIL" style="cursor: pointer;">
+                                <span>SUPERV CIVIL</span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -345,6 +508,10 @@
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" name="funcaoMilitar" value="SUPERVISOR COBOM" style="cursor: pointer;">
                                 <span>SUPERVISOR COBOM</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" name="funcaoMilitar" value="SUPERV CIVIL" style="cursor: pointer;">
+                                <span>SUPERV CIVIL</span>
                             </label>
                         </div>
                     </div>
@@ -418,6 +585,20 @@
             <div id="lastOccurrenceDisplay" class="last-occurrence-display" style="display: none;"></div>
             <img src="LOGO.PNG" alt="COPOM Logo" class="copom-logo">
             <h1>Atendimento</h1>
+            
+            <!-- Pause System -->
+            <div id="pauseSystem" style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0;">Pausas</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
+                    <button id="btnPausaBanheiro" class="btn-pause" data-pause="BANHEIRO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🚻 Banheiro</button>
+                    <button id="btnPausaAlimentacao" class="btn-pause" data-pause="ALIMENTACAO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🍴 Alimentação</button>
+                    <button id="btnPausaJanta" class="btn-pause" data-pause="JANTA/ALMOÇO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🍽️ Janta/Almoço</button>
+                    <button id="btnPausaOperando" class="btn-pause" data-pause="OPERANDO" style="padding: 10px; background: #388e3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">💼 Operando</button>
+                </div>
+                <div id="pauseStatus" style="padding: 10px; background: white; border-radius: 4px; text-align: center; font-weight: 600;"></div>
+                <div id="pauseTimer" style="margin-top: 10px; text-align: center; font-size: 24px; font-weight: 700;"></div>
+            </div>
+
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
                 <button type="button" class="btn-classification" data-classification="ASSUNTO OPERACIONAL" style="flex: 1; min-width: 150px; padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">01 Assunto Operacional</button>
                 <button type="button" class="btn-classification" data-classification="CHAMADA NÃO CONCLUÍDA" style="flex: 1; min-width: 150px; padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;">02 Chamada Não Concluída</button>

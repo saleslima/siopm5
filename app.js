@@ -35,6 +35,8 @@ import { setupFormHandlers } from './form-handlers.js';
 import { showUserDashboard, showDispatcherScreen, showSupervisorScreen } from './ui-screens.js';
 import { detectBTLFromAddress, preloadMaps } from './btl-detector.js';
 import { setupAdminHandlers } from './admin.js';
+import { setupChefiaHandlers } from './chefia.js';
+import { setupSupervCivilHandlers } from './superv-civil.js';
 import './keyboard-shortcuts.js';
 
 const app = initializeApp(firebaseConfig);
@@ -51,6 +53,11 @@ const dispatcherScreen = document.getElementById('dispatcherScreen');
 const adminPasswordScreen = document.getElementById('adminPasswordScreen');
 const adminScreen = document.getElementById('adminScreen');
 
+const chefiaPasswordScreen = document.getElementById('chefiaPasswordScreen');
+const chefiaScreen = document.getElementById('chefiaScreen');
+const supervCivilPasswordScreen = document.getElementById('supervCivilPasswordScreen');
+const supervCivilScreen = document.getElementById('supervCivilScreen');
+
 export const allScreens = [
     loginScreen, 
     cadastroPasswordScreen, 
@@ -60,10 +67,15 @@ export const allScreens = [
     attendanceScreen, 
     dispatcherScreen,
     adminPasswordScreen,
-    adminScreen
+    adminScreen,
+    chefiaPasswordScreen,
+    chefiaScreen,
+    supervCivilPasswordScreen,
+    supervCivilScreen
 ];
 
 // Button elements
+const btnChefia = document.getElementById('btnChefia');
 const btnCadastro = document.getElementById('btnCadastro');
 const btnUsuario = document.getElementById('btnUsuario');
 const btnBackFromCadastroPassword = document.getElementById('btnBackFromCadastroPassword');
@@ -96,6 +108,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Button event listeners
+btnChefia.addEventListener('click', () => {
+    showScreen(chefiaPasswordScreen, allScreens);
+});
+
 btnCadastro.addEventListener('click', () => {
     showScreen(cadastroPasswordScreen, allScreens);
 });
@@ -279,7 +295,7 @@ function createRuaSuggestionsBox() {
     if (ruaSuggestionsBox) return;
     ruaSuggestionsBox = document.createElement('div');
     ruaSuggestionsBox.id = 'ruaSuggestionsBox';
-    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% +600px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
+    ruaSuggestionsBox.style.cssText = 'position: absolute; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 200px; overflow-y: auto; z-index: 200; width: calc(100% - 40px); box-shadow: 0 6px 20px rgba(0,0,0,0.08);';
     const parent = ruaInput.parentNode;
     parent.style.position = 'relative';
     parent.appendChild(ruaSuggestionsBox);
@@ -557,6 +573,8 @@ setupFormHandlers(allScreens);
 setupOcorrenciasSearch();
 setupTelefoneHandler();
 setupAdminHandlers(allScreens);
+setupChefiaHandlers(allScreens);
+setupSupervCivilHandlers(allScreens);
 
 // Load naturezas dropdown on page load
 loadNaturezasDropdown();

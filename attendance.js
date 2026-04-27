@@ -55,6 +55,206 @@ export function getImeis() {
     return imeis;
 }
 
+export async function setupPauseSystem() {
+    const pauseButtons = document.querySelectorAll('.btn-pause');
+    const pauseStatus = document.getElementById('pauseStatus');
+    const pauseTimer = document.getElementById('pauseTimer');
+    
+    let currentPause = null;
+    let pauseStartTime = null;
+    let pauseInterval = null;
+    let currentSessionKey = null;
+
+    // Load pause time limits from database
+    const pauseLimits = await getData('pauseTimeLimits');
+    const timeLimits = {
+        BANHEIRO: (pauseLimits?.banheiro || 10) * 60 * 1000,
+        ALIMENTACAO: (pauseLimits?.alimentacao || 30) * 60 * 1000,
+        'JANTA/ALMOÇO': (pauseLimits?.janta || 60) * 60 * 1000
+    };
+    
+    const attendanceFormElement = document.getElementById('attendanceForm');
+
+    // Restore active pause if exists
+    const activePause = localStorage.getItem('activePause');
+    if (activePause) {
+        const pauseData = JSON.parse(activePause);
+        currentPause = pauseData.type;
+        pauseStartTime = pauseData.startTime;
+        currentSessionKey = pauseData.sessionKey;
+        startPauseTimer();
+    }
+
+    pauseButtons.forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const pauseType = btn.getAttribute('data-pause');
+            
+            if (currentPause === pauseType) {
+                // End current pause
+                await endPause();
+            } else {
+                // End previous pause if any
+                if (currentPause) {
+                    await endPause();
+                }
+                // Start new pause
+                await startPause(pauseType);
+            }
+        });
+    });
+
+    async function startPause(type) {
+        const currentUser = getCurrentUser();
+        if (!currentUser) return;
+
+        currentPause = type;
+        pauseStartTime = Date.now();
+
+        // Create pause session in database
+        const sessionData = {
+            userId: currentUser.cpf ? currentUser.cpf.replace(/\D/g, '') : currentUser.re,
+            userName: currentUser.tipo === 'MILITAR' 
+                ? `${currentUser.graduacao} ${currentUser.nomeGuerra}` 
+                : currentUser.nomeCompleto,
+            pa: currentUser.paValue || 'N/A',
+            tipo: type,
+            inicio: new Date(pauseStartTime).toLocaleString('pt-BR'),
+            inicioTimestamp: pauseStartTime
+        };
+
+        const session = await pushData('pauseSessions', sessionData);
+        currentSessionKey = session.key;
+
+        localStorage.setItem('activePause', JSON.stringify({
+            type: type,
+            startTime: pauseStartTime,
+            sessionKey: currentSessionKey
+        }));
+
+        updatePauseButtons();
+        startPauseTimer();
+        updateFormState();
+    }
+
+    async function endPause() {
+        if (!currentPause || !currentSessionKey) return;
+
+        const endTime = Date.now();
+        const duration = endTime - pauseStartTime;
+
+        // Update session in database
+        await updateData(`pauseSessions/${currentSessionKey}`, {
+            fim: new Date(endTime).toLocaleString('pt-BR'),
+            fimTimestamp: endTime,
+            duracao: duration
+        });
+
+        currentPause = null;
+        pauseStartTime = null;
+        currentSessionKey = null;
+
+        if (pauseInterval) {
+            clearInterval(pauseInterval);
+            pauseInterval = null;
+        }
+
+        localStorage.removeItem('activePause');
+        updatePauseButtons();
+        pauseStatus.textContent = '';
+        pauseTimer.textContent = '';
+        updateFormState();
+    }
+
+    function startPauseTimer() {
+        updatePauseButtons();
+        updateTimer();
+        
+        if (pauseInterval) {
+            clearInterval(pauseInterval);
+        }
+        
+        pauseInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        if (!currentPause || !pauseStartTime) return;
+
+        const elapsed = Date.now() - pauseStartTime;
+        const seconds = Math.floor(elapsed / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+
+        const displayMinutes = minutes % 60;
+        const displaySeconds = seconds % 60;
+
+        pauseTimer.textContent = `${String(hours).padStart(2, '0')}:${String(displayMinutes).padStart(2, '0')}:${String(displaySeconds).padStart(2, '0')}`;
+
+        // Check time limits and update color
+        if (currentPause === 'BANHEIRO' || currentPause === 'ALIMENTACAO' || currentPause === 'JANTA/ALMOÇO') {
+            const limit = timeLimits[currentPause];
+            const warningThreshold = limit * 1.2; // 20% over
+
+            if (elapsed > warningThreshold) {
+                pauseTimer.style.color = '#d32f2f';
+                pauseTimer.classList.add('pause-warning');
+            } else if (elapsed > limit) {
+                pauseTimer.style.color = '#ff9800';
+                pauseTimer.classList.remove('pause-warning');
+            } else {
+                pauseTimer.style.color = '#333';
+                pauseTimer.classList.remove('pause-warning');
+            }
+        }
+    }
+
+    function updatePauseButtons() {
+        pauseButtons.forEach(btn => {
+            const type = btn.getAttribute('data-pause');
+            if (type === currentPause) {
+                btn.style.background = '#1976d2';
+                pauseStatus.textContent = `Status: ${type}`;
+                pauseStatus.style.color = '#1976d2';
+            } else {
+                if (type === 'OPERANDO') {
+                    btn.style.background = '#388e3c';
+                } else {
+                    btn.style.background = '#2c3e50';
+                }
+            }
+        });
+
+        if (!currentPause) {
+            pauseStatus.textContent = 'Nenhuma pausa ativa';
+            pauseStatus.style.color = '#999';
+        }
+    }
+    
+    function updateFormState() {
+        if (!attendanceFormElement) return;
+        
+        // Disable form if not OPERANDO
+        if (currentPause && currentPause !== 'OPERANDO') {
+            attendanceFormElement.style.opacity = '0.4';
+            attendanceFormElement.style.pointerEvents = 'none';
+            
+            // Disable all inputs
+            const inputs = attendanceFormElement.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(input => {
+                input.disabled = true;
+            });
+        } else {
+            attendanceFormElement.style.opacity = '1';
+            attendanceFormElement.style.pointerEvents = 'auto';
+            
+            // Enable all inputs
+            const inputs = attendanceFormElement.querySelectorAll('input, select, textarea, button');
+            inputs.forEach(input => {
+                input.disabled = false;
+            });
+        }
+    }
+}
+
 export function restoreFormFields() {
     const btnVeiculos = document.getElementById('btnVeiculos');
     const btnPessoas = document.getElementById('btnPessoas');
