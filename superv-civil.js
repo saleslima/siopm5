@@ -116,7 +116,7 @@ async function loadRealtimeStatus() {
         }
 
         const now = Date.now();
-        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">';
+        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
         
         activeSessions.forEach(session => {
             const elapsed = now - session.inicioTimestamp;
@@ -141,12 +141,20 @@ async function loadRealtimeStatus() {
             const duration = formatDuration(elapsed);
             
             html += `
-                <div style="background: white; padding: 15px; border: 1px solid ${statusColor}; border-radius: 8px; ${statusClass ? 'animation: blink 1s infinite;' : ''}">
-                    <h4 style="margin: 0 0 10px 0; color: ${statusColor};">${session.tipo}</h4>
-                    <p style="margin: 5px 0; font-weight: 600;">${session.userName}</p>
-                    <p style="margin: 5px 0; font-size: 13px;">P.A: ${session.pa}</p>
-                    <p style="margin: 5px 0; font-size: 24px; font-weight: 700; color: ${statusColor};">${duration}</p>
-                    <p style="margin: 5px 0; font-size: 12px; color: #666;">Início: ${session.inicio}</p>
+                <div style="background: white; padding: 12px; border-left: 4px solid ${statusColor}; border-radius: 4px; display: flex; align-items: center; gap: 15px; ${statusClass ? 'animation: blink 1s infinite;' : ''}">
+                    <div style="min-width: 120px;">
+                        <span style="font-weight: 700; font-size: 14px; color: ${statusColor};">${session.tipo}</span>
+                    </div>
+                    <div style="flex: 1;">
+                        <span style="font-weight: 600; font-size: 14px;">${session.userName}</span>
+                        <span style="margin-left: 10px; font-size: 13px; color: #666;">P.A: ${session.pa}</span>
+                    </div>
+                    <div style="min-width: 100px; text-align: center;">
+                        <span style="font-size: 18px; font-weight: 700; color: ${statusColor};">${duration}</span>
+                    </div>
+                    <div style="min-width: 150px; text-align: right;">
+                        <span style="font-size: 12px; color: #666;">${session.inicio}</span>
+                    </div>
                 </div>
             `;
         });
@@ -198,12 +206,18 @@ async function loadSupervCivilData() {
             userSessions[userId].sessions.push(session);
         });
 
-        let html = '<div style="display: flex; flex-direction: column; gap: 20px;">';
+        let html = `
+            <div style="margin-bottom: 15px;">
+                <button id="btnGerarPDFPausas" class="btn-cadastro" style="padding: 10px 20px;">📄 Gerar PDF</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+        `;
         
         Object.values(userSessions).forEach(user => {
             const totalByType = {
                 BANHEIRO: 0,
                 ALIMENTACAO: 0,
+                'JANTA/ALMOÇO': 0,
                 OPERANDO: 0
             };
 
@@ -216,7 +230,7 @@ async function loadSupervCivilData() {
             html += `
                 <div style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
                     <h3 style="margin-top: 0;">${user.userName} - P.A: ${user.pa}</h3>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px;">
                         <div style="background: #f0f0f0; padding: 15px; border-radius: 4px;">
                             <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🚻 Banheiro</h4>
                             <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType.BANHEIRO)}</p>
@@ -224,6 +238,10 @@ async function loadSupervCivilData() {
                         <div style="background: #f0f0f0; padding: 15px; border-radius: 4px;">
                             <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🍴 Alimentação</h4>
                             <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType.ALIMENTACAO)}</p>
+                        </div>
+                        <div style="background: #f0f0f0; padding: 15px; border-radius: 4px;">
+                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🍽️ Janta/Almoço</h4>
+                            <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType['JANTA/ALMOÇO'])}</p>
                         </div>
                         <div style="background: #e8f5e9; padding: 15px; border-radius: 4px;">
                             <h4 style="margin: 0 0 10px 0; color: #388e3c;">💼 Operando</h4>
@@ -251,6 +269,14 @@ async function loadSupervCivilData() {
         html += '</div>';
         supervCivilContent.innerHTML = html;
         
+        // Setup PDF generation button
+        const btnGerarPDFPausas = document.getElementById('btnGerarPDFPausas');
+        if (btnGerarPDFPausas) {
+            btnGerarPDFPausas.addEventListener('click', () => {
+                generatePausasPDF(userSessions, startTimestamp, endTimestamp);
+            });
+        }
+        
     } catch (error) {
         supervCivilContent.innerHTML = `<p style="text-align: center; color: #d32f2f;">Erro ao carregar dados: ${error.message}</p>`;
     }
@@ -266,4 +292,120 @@ function formatDuration(ms) {
     const displayMinutes = minutes % 60;
     
     return `${hours}h ${displayMinutes}min`;
+}
+
+async function generatePausasPDF(userSessions, startTimestamp, endTimestamp) {
+    const { jsPDF } = await import("https://esm.sh/jspdf@2.5.1");
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
+    const lineHeight = 6;
+    let yPosition = margin;
+
+    // Header
+    doc.setFontSize(18);
+    doc.setFont(undefined, 'bold');
+    doc.text('Relatório de Pausas - Atendentes', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 10;
+
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    doc.text(`Período: ${new Date(startTimestamp).toLocaleString('pt-BR')} a ${new Date(endTimestamp).toLocaleString('pt-BR')}`, margin, yPosition);
+    yPosition += 10;
+
+    // Line separator
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(margin, yPosition, pageWidth - margin, yPosition);
+    yPosition += 10;
+
+    // Content
+    Object.values(userSessions).forEach((user, index) => {
+        // Check if we need a new page
+        if (yPosition > pageHeight - 80) {
+            doc.addPage();
+            yPosition = margin;
+        }
+
+        const totalByType = {
+            BANHEIRO: 0,
+            ALIMENTACAO: 0,
+            'JANTA/ALMOÇO': 0,
+            OPERANDO: 0
+        };
+
+        user.sessions.forEach(session => {
+            if (session.duracao) {
+                totalByType[session.tipo] = (totalByType[session.tipo] || 0) + session.duracao;
+            }
+        });
+
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'bold');
+        doc.text(`${user.userName} - P.A: ${user.pa}`, margin, yPosition);
+        yPosition += lineHeight + 2;
+
+        doc.setFontSize(10);
+        doc.setFont(undefined, 'normal');
+        
+        const summaryLines = [
+            `Banheiro: ${formatDuration(totalByType.BANHEIRO)}`,
+            `Alimentação: ${formatDuration(totalByType.ALIMENTACAO)}`,
+            `Janta/Almoço: ${formatDuration(totalByType['JANTA/ALMOÇO'])}`,
+            `Operando: ${formatDuration(totalByType.OPERANDO)}`,
+            `Total de Sessões: ${user.sessions.length}`
+        ];
+
+        summaryLines.forEach(line => {
+            doc.text(line, margin + 5, yPosition);
+            yPosition += lineHeight;
+        });
+
+        yPosition += 4;
+
+        // Detailed sessions
+        doc.setFontSize(9);
+        doc.text('Detalhamento:', margin + 5, yPosition);
+        yPosition += lineHeight;
+
+        user.sessions.sort((a, b) => a.inicioTimestamp - b.inicioTimestamp).forEach((session, idx) => {
+            if (yPosition > pageHeight - 30) {
+                doc.addPage();
+                yPosition = margin;
+            }
+
+            const sessionDetails = [
+                `${idx + 1}. ${session.tipo}`,
+                `   Início: ${session.inicio}`,
+                session.fim ? `   Fim: ${session.fim}` : '   Status: Em andamento',
+                session.duracao ? `   Duração: ${formatDuration(session.duracao)}` : ''
+            ];
+
+            sessionDetails.forEach(detail => {
+                if (detail) {
+                    doc.text(detail, margin + 10, yPosition);
+                    yPosition += 4;
+                }
+            });
+        });
+
+        yPosition += 6;
+        
+        // Separator between users
+        if (index < Object.values(userSessions).length - 1) {
+            if (yPosition > pageHeight - 20) {
+                doc.addPage();
+                yPosition = margin;
+            }
+            doc.setDrawColor(200);
+            doc.setLineWidth(0.1);
+            doc.line(margin, yPosition, pageWidth - margin, yPosition);
+            yPosition += 8;
+        }
+    });
+
+    const now = new Date();
+    const fileName = `Relatorio_Pausas_${now.getTime()}.pdf`;
+    doc.save(fileName);
 }

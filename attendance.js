@@ -90,8 +90,9 @@ export async function setupPauseSystem() {
             const pauseType = btn.getAttribute('data-pause');
             
             if (currentPause === pauseType) {
-                // End current pause
+                // End current pause and return to OPERANDO
                 await endPause();
+                await startPause('OPERANDO');
             } else {
                 // End previous pause if any
                 if (currentPause) {
@@ -211,9 +212,13 @@ export async function setupPauseSystem() {
         pauseButtons.forEach(btn => {
             const type = btn.getAttribute('data-pause');
             if (type === currentPause) {
-                btn.style.background = '#1976d2';
+                if (type === 'OPERANDO') {
+                    btn.style.background = '#388e3c'; // Green for OPERANDO
+                } else {
+                    btn.style.background = '#d32f2f'; // Red for active pauses
+                }
                 pauseStatus.textContent = `Status: ${type}`;
-                pauseStatus.style.color = '#1976d2';
+                pauseStatus.style.color = type === 'OPERANDO' ? '#388e3c' : '#d32f2f';
             } else {
                 if (type === 'OPERANDO') {
                     btn.style.background = '#388e3c';
