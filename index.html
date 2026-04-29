@@ -51,10 +51,10 @@
                         <button class="btn-filter-status" data-filter="TODOS" style="padding: 8px 16px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Todos</button>
                         <button class="btn-filter-status" data-filter="OPERANDO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Operando</button>
                         <button class="btn-filter-status" data-filter="BANHEIRO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Banheiro</button>
-                        <button class="btn-filter-status" data-filter="ALIMENTACAO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Alimentação</button>
+                        <button class="btn-filter-status" data-filter="COFFEE BREAK" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Coffee Break</button>
                         <button class="btn-filter-status" data-filter="JANTA/ALMOÇO" style="padding: 8px 16px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer;">Janta/Almoço</button>
                     </div>
-                    <div id="realtimeStatusContainer" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; min-height: 200px;">
+                    <div id="realtimeStatusContainer" style="background: white; padding: 20px; border: 1px solid #ddd; border-radius: 4px; min-height: 200px; max-height: 600px; overflow-y: auto;">
                         <p style="text-align: center; color: #999;">Carregando...</p>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
                             <input type="number" id="tempoBanheiro" min="1" value="10" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                         </div>
                         <div>
-                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Tempo Alimentação (minutos)</label>
+                            <label style="display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600;">Tempo Coffee Break (minutos)</label>
                             <input type="number" id="tempoAlimentacao" min="1" value="30" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
                         </div>
                         <div>
@@ -591,12 +591,21 @@
                 <h3 style="margin-top: 0;">Pausas</h3>
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 10px;">
                     <button id="btnPausaBanheiro" class="btn-pause" data-pause="BANHEIRO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🚻 Banheiro</button>
-                    <button id="btnPausaAlimentacao" class="btn-pause" data-pause="ALIMENTACAO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🍴 Alimentação</button>
+                    <button id="btnPausaAlimentacao" class="btn-pause" data-pause="COFFEE BREAK" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">☕ Coffee Break</button>
                     <button id="btnPausaJanta" class="btn-pause" data-pause="JANTA/ALMOÇO" style="padding: 10px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">🍽️ Janta/Almoço</button>
-                    <button id="btnPausaOperando" class="btn-pause" data-pause="OPERANDO" style="padding: 10px; background: #388e3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">💼 Operando</button>
+                    <button id="btnPausaOperando" class="btn-pause-display" data-pause="OPERANDO" style="padding: 10px; background: #388e3c; color: white; border: none; border-radius: 4px; font-weight: 600; opacity: 1; cursor: default;">💼 Operando</button>
                 </div>
                 <div id="pauseStatus" style="padding: 10px; background: white; border-radius: 4px; text-align: center; font-weight: 600;"></div>
                 <div id="pauseTimer" style="margin-top: 10px; text-align: center; font-size: 24px; font-weight: 700;"></div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="formProgressContainer" style="background: #f9f9f9; padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 20px;">
+                <h3 style="margin-top: 0;">Progresso do Preenchimento</h3>
+                <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                    <div id="formProgressBar" style="background: linear-gradient(90deg, #388e3c, #4caf50); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+                </div>
+                <p id="formProgressText" style="margin: 5px 0 0 0; font-size: 14px; font-weight: 600; text-align: center;">0% completo</p>
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -732,7 +741,7 @@
                     <button type="button" id="btnVeiculos" class="btn-secondary">Veículos</button>
                     <button type="button" id="btnPessoas" class="btn-secondary">Pessoas</button>
                     <button type="button" id="btnImei" class="btn-secondary">IMEI</button>
-                    <button type="submit" class="btn-cadastro">Salvar Atendimento</button>
+                    <button type="submit" class="btn-cadastro">Gerar Ocorrência</button>
                     <button type="button" id="btnMinhasOcorrencias" class="btn-secondary">Minha Ocorrências</button>
                     <button type="button" id="btnPesquisarOcorrencias" class="btn-secondary">Pesquisar Ocorrências</button>
                 </div>

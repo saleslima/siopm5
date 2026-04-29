@@ -95,6 +95,7 @@ async function loadRealtimeStatus() {
 
     try {
         const pauseSessions = await getData('pauseSessions');
+        const cadastros = await getData('cadastros');
         const pauseLimits = await getData('pauseTimeLimits') || { banheiro: 10, alimentacao: 30, janta: 60 };
         const thresholds = await getData('pauseThresholds') || { yellowPercent: 20, redPercent: 50 };
         
@@ -103,7 +104,8 @@ async function loadRealtimeStatus() {
             return;
         }
 
-        let activeSessions = Object.values(pauseSessions).filter(s => !s.fim);
+        // Only show sessions that haven't ended (no 'fim' timestamp)
+        let activeSessions = Object.values(pauseSessions).filter(s => !s.fim && !s.fimTimestamp);
         
         // Apply filter
         if (currentStatusFilter !== 'TODOS') {
@@ -116,12 +118,12 @@ async function loadRealtimeStatus() {
         }
 
         const now = Date.now();
-        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+        let html = '<div style="display: flex; flex-direction: column; gap: 4px; max-height: 600px; overflow-y: auto;">';
         
         activeSessions.forEach(session => {
             const elapsed = now - session.inicioTimestamp;
             const limit = session.tipo === 'BANHEIRO' ? pauseLimits.banheiro * 60 * 1000 : 
-                         session.tipo === 'ALIMENTACAO' ? pauseLimits.alimentacao * 60 * 1000 :
+                         session.tipo === 'COFFEE BREAK' ? pauseLimits.alimentacao * 60 * 1000 :
                          session.tipo === 'JANTA/ALMOÇO' ? pauseLimits.janta * 60 * 1000 : 0;
             
             let statusColor = '#388e3c'; // Green for OPERANDO
@@ -129,7 +131,7 @@ async function loadRealtimeStatus() {
             
             if (session.tipo === 'OPERANDO') {
                 statusColor = '#388e3c'; // Green
-            } else if (session.tipo === 'BANHEIRO' || session.tipo === 'ALIMENTACAO' || session.tipo === 'JANTA/ALMOÇO') {
+            } else if (session.tipo === 'BANHEIRO' || session.tipo === 'COFFEE BREAK' || session.tipo === 'JANTA/ALMOÇO') {
                 if (limit > 0 && elapsed > limit) {
                     statusColor = '#d32f2f'; // Red when exceeded
                     statusClass = 'blink-red';
@@ -140,20 +142,36 @@ async function loadRealtimeStatus() {
             
             const duration = formatDuration(elapsed);
             
+            // Try to find user data to get CPF/RE and type
+            let userCpfRe = session.userId || 'N/A';
+            let userType = 'N/A';
+            
+            if (cadastros) {
+                const userEntry = Object.values(cadastros).find(u => {
+                    const cpf = u.cpf ? u.cpf.replace(/\D/g, '') : '';
+                    const re = u.re || '';
+                    return cpf === session.userId || re === session.userId;
+                });
+                
+                if (userEntry) {
+                    userCpfRe = userEntry.cpf || userEntry.re || 'N/A';
+                    userType = userEntry.tipo || 'N/A';
+                }
+            }
+            
             html += `
-                <div style="background: white; padding: 12px; border-left: 4px solid ${statusColor}; border-radius: 4px; display: flex; align-items: center; gap: 15px; ${statusClass ? 'animation: blink 1s infinite;' : ''}">
-                    <div style="min-width: 120px;">
-                        <span style="font-weight: 700; font-size: 14px; color: ${statusColor};">${session.tipo}</span>
+                <div style="background: white; padding: 6px 10px; border-left: 4px solid ${statusColor}; border-radius: 4px; display: flex; align-items: center; gap: 10px; margin-bottom: 2px; ${statusClass ? 'animation: blink 1s infinite;' : ''}">
+                    <div style="min-width: 100px;">
+                        <span style="font-weight: 700; font-size: 13px; color: ${statusColor};">${session.tipo}</span>
                     </div>
                     <div style="flex: 1;">
-                        <span style="font-weight: 600; font-size: 14px;">${session.userName}</span>
-                        <span style="margin-left: 10px; font-size: 13px; color: #666;">P.A: ${session.pa}</span>
+                        <span style="font-weight: 600; font-size: 13px;">${session.userName}</span>
+                        <span style="margin-left: 8px; font-size: 12px; color: #666;">P.A: ${session.pa}</span>
+                        <span style="margin-left: 8px; font-size: 12px; color: #666;">${userType === 'CIVIL' ? 'Civil' : 'Militar'}</span>
+                        <span style="margin-left: 8px; font-size: 12px; color: #666;">${userCpfRe}</span>
                     </div>
-                    <div style="min-width: 100px; text-align: center;">
-                        <span style="font-size: 18px; font-weight: 700; color: ${statusColor};">${duration}</span>
-                    </div>
-                    <div style="min-width: 150px; text-align: right;">
-                        <span style="font-size: 12px; color: #666;">${session.inicio}</span>
+                    <div style="min-width: 80px; text-align: center;">
+                        <span style="font-size: 16px; font-weight: 700; color: ${statusColor};">${duration}</span>
                     </div>
                 </div>
             `;
@@ -216,7 +234,7 @@ async function loadSupervCivilData() {
         Object.values(userSessions).forEach(user => {
             const totalByType = {
                 BANHEIRO: 0,
-                ALIMENTACAO: 0,
+                'COFFEE BREAK': 0,
                 'JANTA/ALMOÇO': 0,
                 OPERANDO: 0
             };
@@ -236,8 +254,8 @@ async function loadSupervCivilData() {
                             <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType.BANHEIRO)}</p>
                         </div>
                         <div style="background: #f0f0f0; padding: 15px; border-radius: 4px;">
-                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🍴 Alimentação</h4>
-                            <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType.ALIMENTACAO)}</p>
+                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">☕ Coffee Break</h4>
+                            <p style="margin: 0; font-size: 24px; font-weight: 700;">${formatDuration(totalByType['COFFEE BREAK'])}</p>
                         </div>
                         <div style="background: #f0f0f0; padding: 15px; border-radius: 4px;">
                             <h4 style="margin: 0 0 10px 0; color: #2c3e50;">🍽️ Janta/Almoço</h4>

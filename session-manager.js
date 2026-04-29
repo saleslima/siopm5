@@ -40,7 +40,25 @@ export async function restoreSession(allScreens) {
     }
 }
 
-export function clearSession() {
+export async function clearSession() {
+    const sessionId = localStorage.getItem('copomSessionId');
+    
+    if (sessionId) {
+        try {
+            const { getData, setData } = await import('./database.js');
+            const activeSessions = await getData('activeSessions') || {};
+            
+            if (activeSessions[sessionId]) {
+                delete activeSessions[sessionId];
+                await setData('activeSessions', activeSessions);
+            }
+        } catch (error) {
+            console.error('Error clearing session:', error);
+        }
+        
+        localStorage.removeItem('copomSessionId');
+    }
+    
     localStorage.removeItem('copomUserSession');
 }
 

@@ -69,7 +69,7 @@ export async function setupPauseSystem() {
     const pauseLimits = await getData('pauseTimeLimits');
     const timeLimits = {
         BANHEIRO: (pauseLimits?.banheiro || 10) * 60 * 1000,
-        ALIMENTACAO: (pauseLimits?.alimentacao || 30) * 60 * 1000,
+        'COFFEE BREAK': (pauseLimits?.alimentacao || 30) * 60 * 1000,
         'JANTA/ALMOÇO': (pauseLimits?.janta || 60) * 60 * 1000
     };
     
@@ -83,11 +83,19 @@ export async function setupPauseSystem() {
         pauseStartTime = pauseData.startTime;
         currentSessionKey = pauseData.sessionKey;
         startPauseTimer();
+    } else {
+        // Start in OPERANDO by default
+        await startPause('OPERANDO');
     }
 
     pauseButtons.forEach(btn => {
         btn.addEventListener('click', async () => {
             const pauseType = btn.getAttribute('data-pause');
+            
+            // Don't allow clicking on OPERANDO
+            if (pauseType === 'OPERANDO') {
+                return;
+            }
             
             if (currentPause === pauseType) {
                 // End current pause and return to OPERANDO
@@ -95,7 +103,7 @@ export async function setupPauseSystem() {
                 await startPause('OPERANDO');
             } else {
                 // End previous pause if any
-                if (currentPause) {
+                if (currentPause && currentPause !== 'OPERANDO') {
                     await endPause();
                 }
                 // Start new pause
@@ -209,21 +217,32 @@ export async function setupPauseSystem() {
     }
 
     function updatePauseButtons() {
+        const operandoBtn = document.getElementById('btnPausaOperando');
+        
         pauseButtons.forEach(btn => {
             const type = btn.getAttribute('data-pause');
             if (type === currentPause) {
                 if (type === 'OPERANDO') {
                     btn.style.background = '#388e3c'; // Green for OPERANDO
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'default';
                 } else {
                     btn.style.background = '#d32f2f'; // Red for active pauses
+                    btn.style.opacity = '1';
+                    btn.style.cursor = 'pointer';
                 }
                 pauseStatus.textContent = `Status: ${type}`;
                 pauseStatus.style.color = type === 'OPERANDO' ? '#388e3c' : '#d32f2f';
             } else {
                 if (type === 'OPERANDO') {
                     btn.style.background = '#388e3c';
+                    btn.style.opacity = currentPause !== 'OPERANDO' ? '0.4' : '1';
+                    btn.style.cursor = 'default';
                 } else {
                     btn.style.background = '#2c3e50';
+                    btn.style.opacity = (currentPause && currentPause !== 'OPERANDO') ? '0.4' : '1';
+                    btn.style.cursor = (currentPause && currentPause !== 'OPERANDO') ? 'not-allowed' : 'pointer';
+                    btn.style.pointerEvents = (currentPause && currentPause !== 'OPERANDO') ? 'none' : 'auto';
                 }
             }
         });

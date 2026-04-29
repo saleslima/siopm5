@@ -139,17 +139,17 @@ btnBackFromCadastro.addEventListener('click', () => {
     militarFields.style.display = 'none';
 });
 
-btnLogout.addEventListener('click', () => {
-    clearSession();
+btnLogout.addEventListener('click', async () => {
+    await clearSession();
     setCurrentUser(null);
     showScreen(loginScreen, allScreens);
 });
 
-btnBackFromAttendance.addEventListener('click', () => {
+btnBackFromAttendance.addEventListener('click', async () => {
     // Before logging out/navigating, ensure form state is clean (especially important if in reiteration flow)
     restoreFormFields();
     
-    clearSession();
+    await clearSession();
     setCurrentUser(null);
     showScreen(loginScreen, allScreens);
     document.getElementById('attendanceForm').reset();
@@ -157,8 +157,8 @@ btnBackFromAttendance.addEventListener('click', () => {
     document.getElementById('ocorrenciasSearchList').style.display = 'none'; // Ensure search list is also closed
 });
 
-btnLogoutDispatcher.addEventListener('click', () => {
-    clearSession();
+btnLogoutDispatcher.addEventListener('click', async () => {
+    await clearSession();
     setCurrentUser(null);
     showScreen(loginScreen, allScreens);
 });
@@ -222,6 +222,9 @@ setupAutoUppercase([document.getElementById('loginCpfRe')]);
 
 // Setup form autosave for attendant mode
 setupFormAutosave();
+
+// Setup form progress tracking
+setupFormProgressTracking();
 
 // Add auto-uppercase for password input
 document.getElementById('cadastroPassword').addEventListener('input', (e) => {
@@ -1039,4 +1042,41 @@ function setupFormAutosave() {
             }, 1000);
         });
     }
+}
+
+function setupFormProgressTracking() {
+    const attendanceFormFields = [
+        'telefone', 'nomeAtendimento', 'cep', 'rua', 'numero', 'bairro', 
+        'municipio', 'estado', 'historico', 'natureza', 'gravidade'
+    ];
+    
+    function updateProgress() {
+        const progressBar = document.getElementById('formProgressBar');
+        const progressText = document.getElementById('formProgressText');
+        
+        if (!progressBar || !progressText) return;
+        
+        let filledCount = 0;
+        attendanceFormFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field && field.value && field.value.trim()) {
+                filledCount++;
+            }
+        });
+        
+        const percentage = Math.round((filledCount / attendanceFormFields.length) * 100);
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = percentage + '% completo';
+    }
+    
+    attendanceFormFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('input', updateProgress);
+            field.addEventListener('change', updateProgress);
+        }
+    });
+    
+    // Initial update
+    setTimeout(updateProgress, 500);
 }
